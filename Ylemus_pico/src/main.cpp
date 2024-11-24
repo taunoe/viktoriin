@@ -23,7 +23,7 @@
 //  A0 -> 1K Reststor -> RX on DFPlayerMini
 //  A1 -> TX on DFPlayerMini
 
-#define NUM_OF_NUPPs 4
+#define NUM_OF_PLAIERS 4  // Mängijaid
 #define NUPP_1_LED 3
 #define NUPP_2_LED 4
 #define NUPP_3_LED 5
@@ -76,11 +76,11 @@ enum LED_Status : uint8_t
 };
 
 // Status we want to share with the buttons
-LED_Status led_status[4] = {LED_off, LED_off, LED_off, LED_off};
-bool btn_enabled[4] = {false, false, false, false};
-bool btn_connected[4] = {false, false, false, false};
-bool has_answered[4] = {false, false, false, false};
-uint32_t last_contact_time[4] = {0, 0, 0, 0};
+LED_Status led_status[NUM_OF_PLAIERS] = {LED_off, LED_off, LED_off, LED_off};
+bool btn_enabled[NUM_OF_PLAIERS] = {false, false, false, false};
+bool btn_connected[NUM_OF_PLAIERS] = {false, false, false, false};
+bool has_answered[NUM_OF_PLAIERS] = {false, false, false, false};
+uint32_t last_contact_time[NUM_OF_PLAIERS] = {0, 0, 0, 0};
 
 // Last loop time
 uint32_t now = 0;
@@ -150,7 +150,8 @@ void setup()
     radio.openWritingPipe((uint8_t *)pipe);
     pipe[0] = '1';
     radio.openReadingPipe(1, (uint8_t *)pipe);
-    for (uint8_t channel = 0; channel < 4; channel++)
+
+    for (uint8_t channel = 0; channel < NUM_OF_PLAIERS; channel++)
     {
       pinMode(BTN_LEDS[channel], OUTPUT);
       digitalWrite(BTN_LEDS[channel], LOW);
@@ -182,7 +183,7 @@ void loop()
   if (digitalRead(PIN_RESET_BTN) == LOW)
   { // Reset button pressed?
     // Turn all buttons off
-    for (unsigned char button = 0; button < 4; button++)
+    for (unsigned char button = 0; button < NUM_OF_PLAIERS; button++)
     {
       led_status[button] = LED_off;
       btn_enabled[button] = false;
@@ -199,7 +200,7 @@ void loop()
   else if (digitalRead(PIN_READY_BTN) == LOW)
   { // Ready button pressed
     // Make the buttons flash that havent answered yet
-    for (unsigned char button = 0; button < 4; button++)
+    for (unsigned char button = 0; button < NUM_OF_PLAIERS; button++)
     {
       btn_enabled[button] = !has_answered[button];
       led_status[button] = has_answered[button] ? LED_off : LED_flashing;
@@ -214,7 +215,7 @@ void loop()
   }
 
   // Update our LEDs and monitor for ones that are out of contact
-  for (unsigned char button = 0; button < 4; button++)
+  for (unsigned char button = 0; button < NUM_OF_PLAIERS; button++)
   {
     // If the button is connected
     if (btn_connected[button])
@@ -264,7 +265,9 @@ bool find_empty_channel()
     {
       digitalWrite(PIN_STATUS_LED, millis() % 500 > 400);
       if ((radio.testCarrier()) || (radio.testRPD()))
+      {
         inUse++;
+      }
       delay(1);
     }
 
@@ -287,10 +290,14 @@ bool find_empty_channel()
 void setup_ACK_payload()
 {
   // Update the ACK for the next payload
-  unsigned char payload[4];
-  for (unsigned char button = 0; button < 4; button++)
+  unsigned char payload[NUM_OF_PLAIERS];
+
+  for (unsigned char button = 0; button < NUM_OF_PLAIERS; button++)
+  {
     payload[button] = (btn_enabled[button] ? 128 : 0) | led_status[button];
-  radio.writeAckPayload(1, &payload, 4);
+  }
+
+  radio.writeAckPayload(1, &payload, 4); // NUM_OF_PLAIERS ??
 }
 
 /********************************************************** */
@@ -306,7 +313,7 @@ void check_radio_message_received()
 
     // Grab the button number from the data
     unsigned char buttonNumber = buffer & 0x7F; // Get the button number
-    if ((buttonNumber >= 1) && (buttonNumber <= 4))
+    if ((buttonNumber >= 1) && (buttonNumber <= NUM_OF_PLAIERS))
     {
       buttonNumber--;
 
@@ -332,8 +339,10 @@ void check_radio_message_received()
         has_answered[buttonNumber] = true;
 
         // Change button status
-        for (unsigned char btn = 0; btn < 4; btn++)
+        for (unsigned char btn = 0; btn < NUM_OF_PLAIERS; btn++)
+        {
           led_status[btn] = (btn == buttonNumber) ? LED_on : LED_off;
+        }
 
         // Turn off the ready light
         digitalWrite(PIN_STATUS_LED, LOW);
