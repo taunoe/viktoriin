@@ -60,7 +60,7 @@ DFRobotDFPlayerMini player;
 */
 
 // NUPP LED pins
-uint8_t BTN_LEDS[NUM_OF_NUPPs] = {
+uint8_t BTN_LEDS[NUM_OF_PLAIERS] = {
   NUPP_1_LED,
   NUPP_2_LED,
   NUPP_3_LED,
