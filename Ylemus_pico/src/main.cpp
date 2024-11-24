@@ -297,7 +297,7 @@ void setup_ACK_payload()
     payload[button] = (btn_enabled[button] ? 128 : 0) | led_status[button];
   }
 
-  radio.writeAckPayload(1, &payload, 4); // NUM_OF_PLAIERS ??
+  radio.writeAckPayload(1, &payload, NUM_OF_PLAIERS);
 }
 
 /********************************************************** */
