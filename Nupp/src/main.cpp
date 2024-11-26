@@ -1,8 +1,13 @@
+/**
+ *  Klient - NUPP
+ *  Edited: 26.11.2024
+ *  Tauno Erik
+ */
 #include <Arduino.h>
 #include <RF24.h>
 //#include <EEPROM.h>
 
-#define DEVICE_ID 1  // igal oma unikaalne number!!
+#define DEVICE_ID 0  // igal oma unikaalne number!!
 
 //   4 -> Button to GND
 //   5 -> LED to GND (Button)
@@ -225,7 +230,7 @@ bool send_btn_status(bool isDown)
 
           buttonEnabled = (tmp[buttonNumber - 1] & 128) != 0;
           ledStatus = (LED_Status)(tmp[buttonNumber - 1] & 3);
-          Serial.write("Write OK, ACK Payload\n");
+          Serial.write("Radio write OK, ACK Payload\n");
 
           return true;
         }
@@ -236,14 +241,14 @@ bool send_btn_status(bool isDown)
           unsigned char tmp;
           while (total-- > 0)
             radio.read(&tmp, 1);
-          Serial.write("Write OK, ACK wrong size\n");
+          Serial.write("Radio write OK, ACK wrong size\n");
           delay(randomDelayAmount);
         }
       }
       else
       {
         // This shouldn't really happen, but can sometimes if the controller is busy
-        Serial.write("Write OK, no ACK\n");
+        Serial.write("Radio write OK, no ACK\n");
         return true;
       }
     }
@@ -253,6 +258,6 @@ bool send_btn_status(bool isDown)
     }
   }
 
-  Serial.write("Write Failed\n");
+  Serial.write("Radio write Failed\n");
   return false;
 }
