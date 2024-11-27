@@ -2750,6 +2750,94 @@
 		)
 		(uuid "fe7f481c-c55c-4c61-9d67-0c8f4077f9c8")
 	)
+	(circle
+		(center 255.016 142.494)
+		(radius 1.27)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid 2066dd3e-f40e-4945-9062-a30311e28864)
+	)
+	(rectangle
+		(start 224.536 108.204)
+		(end 277.876 159.004)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid 336a6a18-63d9-4189-9506-5c6267b25167)
+	)
+	(rectangle
+		(start 252.476 151.384)
+		(end 257.556 156.464)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type color)
+			(color 255 255 194 1)
+		)
+		(uuid 56170c55-cf04-4d53-89cf-dba06a898f25)
+	)
+	(rectangle
+		(start 238.506 134.874)
+		(end 247.396 139.954)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type color)
+			(color 255 255 194 1)
+		)
+		(uuid 8f281e30-eb14-418b-9324-91869ae2e702)
+	)
+	(rectangle
+		(start 262.636 134.874)
+		(end 271.526 139.954)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type color)
+			(color 255 255 194 1)
+		)
+		(uuid 8faafd51-6156-4e8f-95c7-971ff7775e1f)
+	)
+	(circle
+		(center 255.016 153.924)
+		(radius 1.27)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid 9b55c026-c04e-483e-8b44-a535f6cb20a6)
+	)
+	(rectangle
+		(start 252.476 131.064)
+		(end 257.556 145.034)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type color)
+			(color 255 255 194 1)
+		)
+		(uuid a522455c-ca63-4f0e-8af7-78d8b7599759)
+	)
 	(rectangle
 		(start 29.21 123.19)
 		(end 86.36 149.86)
@@ -2762,45 +2850,131 @@
 		)
 		(uuid da6bb2a4-37be-49b0-94b4-acf7593cf949)
 	)
+	(circle
+		(center 241.046 137.414)
+		(radius 1.27)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid e233990e-4e83-4c92-92fe-7bed819c7c67)
+	)
+	(circle
+		(center 268.986 137.16)
+		(radius 1.27)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid e3d6b53f-6119-4622-b6da-4db5baf19479)
+	)
+	(rectangle
+		(start 247.396 120.904)
+		(end 262.636 151.384)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid ef6efd5f-2c27-41b0-af06-26e9bb36637b)
+	)
 	(text "nRF24L01"
 		(exclude_from_sim no)
 		(at 177.8 33.528 0)
 		(effects
 			(font
-				(size 2 2)
+				(size 2.54 2.54)
 			)
 			(justify left bottom)
 		)
 		(uuid "2ef010db-f947-4827-bf65-742fd48d95c4")
 	)
-	(text "Main button\nand LED"
+	(text "led2"
 		(exclude_from_sim no)
-		(at 26.162 55.88 0)
+		(at 268.986 132.334 0)
 		(effects
 			(font
-				(size 2 2)
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "3581b1cf-ca56-4c56-846c-bf75f5a42c2c")
+	)
+	(text "Main button\nand LED"
+		(exclude_from_sim no)
+		(at 21.082 58.674 0)
+		(effects
+			(font
+				(size 2.54 2.54)
 			)
 			(justify left bottom)
 		)
 		(uuid "44f9a8a4-2055-4f6e-83b4-115b262af85e")
+	)
+	(text "led1"
+		(exclude_from_sim no)
+		(at 240.792 132.588 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "678ee95c-cce5-4a57-987b-559b9639fa1d")
+	)
+	(text "btn1"
+		(exclude_from_sim no)
+		(at 260.35 143.256 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "6f45fe16-1780-4032-8938-e1833f74a85f")
+	)
+	(text "btn2"
+		(exclude_from_sim no)
+		(at 260.35 155.448 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "9bd9f8d6-946e-4800-a740-c56f149a43d6")
 	)
 	(text "Arduino Nano"
 		(exclude_from_sim no)
 		(at 45.72 25.908 0)
 		(effects
 			(font
-				(size 2 2)
+				(size 2.54 2.54)
 			)
 			(justify left bottom)
 		)
 		(uuid "dcaa1b83-f644-4962-9dc7-aab558b356cd")
+	)
+	(text "Button pins"
+		(exclude_from_sim no)
+		(at 240.03 115.57 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+			)
+		)
+		(uuid "f6b66037-d9ea-414c-a7ae-99eddab59a7a")
 	)
 	(text "Battery 4xAA"
 		(exclude_from_sim no)
 		(at 29.21 121.92 0)
 		(effects
 			(font
-				(size 2 2)
+				(size 2.54 2.54)
 			)
 			(justify left bottom)
 		)
