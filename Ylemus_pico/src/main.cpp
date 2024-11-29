@@ -3,80 +3,42 @@
  * main.cpp
  * Tauno Erik
  * 29.11.2024
+ * 
+ * Board: Raspberry Pi Pico
  *********************************************/
 #include <Arduino.h>
 #include <RF24.h>
 #include <SPI.h>
-// #include <DFRobotDFPlayerMini.h>
-// #include <SoftwareSerial.h>
-
-//   2 -> White LED to GND  (Status)
-
-//   3 -> RED LED to GND    (Button Status)
-//   4 -> YELLOW LED to GND (Button Status)
-//   5 -> GREEN LED to GND  (Button Status)
-//   6 -> BLUE LED to GND   (Button Status)
-
-//   7 -> RESET btn to GND
-//   8 -> READY btn to GND
-
-// Aarduino nano
-//   9 -> CE  (nRF24)
-//  10 -> CSN (nRF24)
-//  11 -> MO  (nRF24)
-//  12 -> MI  (nRF24)
-//  13 -> SCK (nRF24)
-
-//  A0 -> 1K Reststor -> RX on DFPlayerMini
-//  A1 -> TX on DFPlayerMini
 
 #define NUM_OF_PLAYERS 5  // Mängijaid
+// LEDS
 #define NUPP_0_LED 10 // GPIO10
 #define NUPP_1_LED 11
 #define NUPP_2_LED 12
 #define NUPP_3_LED 13
 #define NUPP_4_LED 14
-
-
 #define PIN_STATUS_LED 15
+// Buttons
 #define PIN_RESET_BTN 8
 #define PIN_READY_BTN 9
+#define PRESSED 0
 
-// Pi Pico
-// CSN  -> GPIO16
-// CE -  > GPIO17
-// SCK  -> GPIO18 // ei saa muuta
-// MOSI -> GPIO19 // ei saa muuta
-// MISO -> GPIO20 // ei saa muuta
-// IRQ  -> x
-
+// Radio - SPI
 // https://www.youtube.com/watch?v=y5tFUnR5hM0
-//For Arduino-pico core
+// For Arduino-pico core
 #define PIN_MISO  16
 #define PIN_MOSI 19
 #define PIN_CS 17
 #define PIN_SCK 18
-
 #define PIN_CE 22
 
-
-//bool setRX(PIN_MISO); // or setMISO()
-//bool setCS(PIN_CE);
-//bool setSCK(PIN_CSN);
-//bool setTX(PIN_MOSI); // or setMOSI()
+uint8_t write_pipe[6] = "0QBTN";
+uint8_t read_pipe[6] = "1QBTN";
 
 RF24 radio(PIN_CE, PIN_CS);
 
 
-/*
-#define DFMINI_TX A0 // connect to pin 2 on the DFPlayer via a 1K resistor
-#define DFMINI_RX A1 // connect to pin 3 on the DFPlayer
-SoftwareSerial softwareSerial(DFMINI_RX, DFMINI_TX);
 
-// Player
-// Tip: If you have any problems with the DFPlayerMini, power it from the Arduino's 3.3v pin rather than 5v.
-DFRobotDFPlayerMini player;
-*/
 
 // NUPP LED pins
 uint8_t BTN_LEDS[NUM_OF_PLAYERS] = {
@@ -95,7 +57,7 @@ enum LED_Status : uint8_t
   LED_flashing = 2
 };
 
-// Status we want to share with the buttons
+
 LED_Status led_status[NUM_OF_PLAYERS] = {LED_off, LED_off, LED_off, LED_off, LED_off};
 bool btn_enabled[NUM_OF_PLAYERS] = {false, false, false, false, false};
 bool btn_connected[NUM_OF_PLAYERS] = {false, false, false, false, false};
@@ -125,22 +87,11 @@ void setup()
 {
 
   Serial.begin(57600);
-  while (!Serial)
-  {
-  };
+  
+  //while (!Serial)
+  //{
+  //};
 
-  // small delay to allow the DFPlayerMini to boot
-  delay(1000);
-
-  // For the DFPlayerMini
-  /*softwareSerial.begin(9600);
-  if (player.begin(softwareSerial))
-  {
-    player.volume(30);
-    dfPlayerReady = true;
-  }*/
-
-  // Setup the radio device
   radio.begin();
   radio.setPALevel(RF24_PA_LOW);
   radio.enableDynamicPayloads();
@@ -149,7 +100,6 @@ void setup()
   radio.setRetries(4, 8);
   radio.maskIRQ(false, false, false); // not using the IRQs
 
-  // Setup our I/O
   pinMode(PIN_STATUS_LED, OUTPUT);
   pinMode(PIN_RESET_BTN, INPUT_PULLUP);
   pinMode(PIN_READY_BTN, INPUT_PULLUP);
@@ -162,13 +112,8 @@ void setup()
   {
     Serial.write("RF24 detected.\n");
 
-    // Trun off the LED
     digitalWrite(PIN_STATUS_LED, LOW);
 
-    // Now setup the pipes for the four buttons
-    uint8_t write_pipe[6] = "0QBTN";
-    uint8_t read_pipe[6] = "1QBTN";
-    
     radio.openWritingPipe(write_pipe);
     radio.openReadingPipe(1, read_pipe);
 
@@ -178,15 +123,12 @@ void setup()
       digitalWrite(BTN_LEDS[channel], LOW);
     }
 
-    // Start listening for messages
     radio.startListening();
 
-    // Find an empty channel to run on
     while (!(find_empty_channel()))
     {
     };
 
-    // Start listening for messages
     radio.startListening();
 
     // Ready
@@ -201,25 +143,21 @@ void loop()
 {
   now = millis();
 
-  if (digitalRead(PIN_RESET_BTN) == LOW)
-  { // Reset button pressed?
-    // Turn all buttons off
-    for (unsigned char button = 0; button < NUM_OF_PLAYERS; button++)
+  // Reset Button
+  if (digitalRead(PIN_RESET_BTN) == PRESSED) // LOW
+  {
+    for (uint8_t button = 0; button < NUM_OF_PLAYERS; button++)
     {
       led_status[button] = LED_off;
       btn_enabled[button] = false;
       has_answered[button] = false;
-      if (is_playing)
-      {
-        //player.stop();
-        is_playing = false;
-      }
     }
     is_ready = false;
     digitalWrite(PIN_STATUS_LED, LOW);
   }
-  else if (digitalRead(PIN_READY_BTN) == LOW)
-  { // Ready button pressed
+  // Ready Button
+  else if (digitalRead(PIN_READY_BTN) == PRESSED) // LOW
+  {
     // Make the buttons flash that havent answered yet
     for (unsigned char button = 0; button < NUM_OF_PLAYERS; button++)
     {
@@ -227,18 +165,12 @@ void loop()
       led_status[button] = has_answered[button] ? LED_off : LED_flashing;
     }
     is_ready = true;
-    if (is_playing)
-    {
-      //player.stop();
-      is_playing = false;
-    }
     digitalWrite(PIN_STATUS_LED, HIGH);
   }
 
   // Update our LEDs and monitor for ones that are out of contact
-  for (unsigned char button = 0; button < NUM_OF_PLAYERS; button++)
+  for (uint8_t button = 0; button < NUM_OF_PLAYERS; button++)
   {
-    // If the button is connected
     if (btn_connected[button])
     {
       // If its been 1 second since we heard from it
@@ -261,13 +193,13 @@ void loop()
     }
   }
 
-  // Check for messages on the 'network'
   check_radio_message_received();
 }
 
 
-/***************************************************/
-// searches the radio spectrum for a quiet channel
+/**************************************************
+** Searches the radio spectrum for a quiet channel
+***************************************************/
 bool find_empty_channel()
 {
   Serial.write("Scanning for empty channel...\n");
@@ -279,21 +211,21 @@ bool find_empty_channel()
     radio.setChannel(channel);
     delay(20);
 
-    unsigned int inUse = 0;
-    unsigned long testStart = millis();
+    unsigned int in_use = 0;
+    uint32_t test_start = millis();
     // Check for 400 ms per channel
-    while (millis() - testStart < 400)
+    while (millis() - test_start < 400)
     {
       digitalWrite(PIN_STATUS_LED, millis() % 500 > 400);
       if ((radio.testCarrier()) || (radio.testRPD()))
       {
-        inUse++;
+        in_use++;
       }
       delay(1);
     }
 
     // Low usage?
-    if (inUse < 10)
+    if (in_use < 10)
     {
       itoa(channel, buffer, 10);
       Serial.write("Channel ");
@@ -305,15 +237,15 @@ bool find_empty_channel()
   return false;
 }
 
-/***********************************************************/
-
-// Sends a new ACK payload to the transmitter
+/***********************************************************
+** Sends a new ACK payload to the transmitter
+************************************************************/
 void setup_ACK_payload()
 {
   // Update the ACK for the next payload
-  unsigned char payload[NUM_OF_PLAYERS];
+  uint8_t payload[NUM_OF_PLAYERS];
 
-  for (unsigned char button = 0; button < NUM_OF_PLAYERS; button++)
+  for (uint8_t button = 0; button < NUM_OF_PLAYERS; button++)
   {
     payload[button] = (btn_enabled[button] ? 128 : 0) | led_status[button];
   }
@@ -321,51 +253,50 @@ void setup_ACK_payload()
   radio.writeAckPayload(1, &payload, NUM_OF_PLAYERS);
 }
 
-/********************************************************** */
 
-// Check for messages from the buttons
+/**********************************************************
+** Check for messages from the buttons
+***********************************************************/
 void check_radio_message_received()
 {
-  // Check if data is available
   if (radio.available())
   {
-    unsigned char buffer;
+    uint8_t buffer;
     radio.read(&buffer, 1);
 
     // Grab the button number from the data
-    unsigned char buttonNumber = buffer & 0x7F; // Get the button number
-    if ((buttonNumber >= 1) && (buttonNumber <= NUM_OF_PLAYERS))
+    uint8_t button_number = buffer & 0x7F; // Get the button number
+    if ((button_number >= 1) && (button_number <= NUM_OF_PLAYERS))
     {
-      buttonNumber--;
+      button_number--;
 
       // Update the last contact time for this button
-      last_contact_time[buttonNumber] = now;
+      last_contact_time[button_number] = now;
 
       // And that it's connected
-      btn_connected[buttonNumber] = true;
+      btn_connected[button_number] = true;
 
       // If the button was pressed, was enabled, hasn't answered and the system is ready for button presses
-      if ((buffer & 128) && (btn_enabled[buttonNumber]) && (!has_answered[buttonNumber]) && (is_ready))
+      if ((buffer & 128) && (btn_enabled[button_number]) && (!has_answered[button_number]) && (is_ready))
       {
         // No longer ready
         is_ready = false;
 
-        if (dfPlayerReady)
-        {
+        //if (dfPlayerReady)
+        //{
           //player.play(buttonNumber + 1);
-          is_playing = true;
-        }
+          //is_playing = true;
+       // }
 
         // Signal the button was pressed
-        has_answered[buttonNumber] = true;
+        has_answered[button_number] = true;
 
         // Change button status
-        for (unsigned char btn = 0; btn < NUM_OF_PLAYERS; btn++)
+        for (uint8_t btn = 0; btn < NUM_OF_PLAYERS; btn++)
         {
-          led_status[btn] = (btn == buttonNumber) ? LED_on : LED_off;
+          led_status[btn] = (btn == button_number) ? LED_on : LED_off;
         }
 
-        // Turn off the ready light
         digitalWrite(PIN_STATUS_LED, LOW);
       }
     }
