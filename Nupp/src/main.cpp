@@ -1,13 +1,21 @@
 /**
  *  Klient - NUPP
- *  Edited: 26.11.2024
+ *  Edited: 29.11.2024
  *  Tauno Erik
+ *  
+ *  Board: Arduino Nano
  */
 #include <Arduino.h>
 #include <RF24.h>
 //#include <EEPROM.h>
 
-#define DEVICE_ID 0  // igal oma unikaalne number!!
+//#define DEVICE_ID 1 // Punane
+//#define DEVICE_ID 2 // Roheline
+//#define DEVICE_ID 3 // Kollane
+//#define DEVICE_ID 4 // Sinine
+#define DEVICE_ID 5 // Valge
+
+#define NUM_OF_PLAYERS 5
 
 //   4 -> Button to GND
 //   5 -> LED to GND (Button)
@@ -105,10 +113,12 @@ void setup()
   }
 
   // Configure the i/o
-  char pipe[6] = "1QBTN";
-  radio.openWritingPipe((uint8_t *)pipe);
-  pipe[0] = '0';
-  radio.openReadingPipe(1, (uint8_t *)pipe);
+  uint8_t write_pipe[6] = "1QBTN";
+  uint8_t read_pipe[6] = "0QBTN";
+
+  radio.openWritingPipe(write_pipe);
+  radio.openReadingPipe(1, read_pipe);
+
   radio.stopListening();
 }
 
@@ -214,7 +224,7 @@ bool send_btn_status(bool isDown)
     message |= 128;
   } 
 
-  for (unsigned char retries = 0; retries < 4; retries++)
+  for (unsigned char retries = 0; retries < NUM_OF_PLAYERS; retries++) //4
   {
     // This delay is used incase transmit fails.  We will assume it fails because of data collision with another button.
     // This is inspired by https://www.geeksforgeeks.org/back-off-algorithm-csmacd/
@@ -223,10 +233,11 @@ bool send_btn_status(bool isDown)
     {
       if (radio.available())
       {
-        if (radio.getDynamicPayloadSize() == 4)
+        Serial.write("radio.available()\n");
+        if (radio.getDynamicPayloadSize() == NUM_OF_PLAYERS) // 4
         {
-          unsigned char tmp[4];
-          radio.read(&tmp, 4);
+          unsigned char tmp[NUM_OF_PLAYERS]; // 4
+          radio.read(&tmp, NUM_OF_PLAYERS); // 4
 
           buttonEnabled = (tmp[buttonNumber - 1] & 128) != 0;
           ledStatus = (LED_Status)(tmp[buttonNumber - 1] & 3);

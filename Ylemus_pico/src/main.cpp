@@ -1,5 +1,12 @@
+/*********************************************
+ * Ülemus
+ * main.cpp
+ * Tauno Erik
+ * 29.11.2024
+ *********************************************/
 #include <Arduino.h>
 #include <RF24.h>
+#include <SPI.h>
 // #include <DFRobotDFPlayerMini.h>
 // #include <SoftwareSerial.h>
 
@@ -43,11 +50,22 @@
 // MISO -> GPIO20 // ei saa muuta
 // IRQ  -> x
 
-#define PIN_CSN_nRF24 16
-#define PIN_CE_nRF24 17
+// https://www.youtube.com/watch?v=y5tFUnR5hM0
+//For Arduino-pico core
+#define PIN_MISO  16
+#define PIN_MOSI 19
+#define PIN_CS 17
+#define PIN_SCK 18
 
-RF24 radio(PIN_CE_nRF24, PIN_CSN_nRF24);
+#define PIN_CE 22
 
+
+//bool setRX(PIN_MISO); // or setMISO()
+//bool setCS(PIN_CE);
+//bool setSCK(PIN_CSN);
+//bool setTX(PIN_MOSI); // or setMOSI()
+
+RF24 radio(PIN_CE, PIN_CS);
 
 
 /*
@@ -107,9 +125,9 @@ void setup()
 {
 
   Serial.begin(57600);
-  /*while (!Serial)
+  while (!Serial)
   {
-  };*/
+  };
 
   // small delay to allow the DFPlayerMini to boot
   delay(1000);
@@ -148,10 +166,11 @@ void setup()
     digitalWrite(PIN_STATUS_LED, LOW);
 
     // Now setup the pipes for the four buttons
-    char pipe[6] = "0QBTN";
-    radio.openWritingPipe((uint8_t *)pipe);
-    pipe[0] = '1';
-    radio.openReadingPipe(1, (uint8_t *)pipe);
+    uint8_t write_pipe[6] = "0QBTN";
+    uint8_t read_pipe[6] = "1QBTN";
+    
+    radio.openWritingPipe(write_pipe);
+    radio.openReadingPipe(1, read_pipe);
 
     for (uint8_t channel = 0; channel < NUM_OF_PLAYERS; channel++)
     {

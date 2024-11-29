@@ -6,7 +6,7 @@
 	(paper "A4")
 	(title_block
 		(title "Ülemus")
-		(date "2024-11-27")
+		(date "2024-11-29")
 		(comment 1 "Tauno Erik")
 	)
 	(lib_symbols
@@ -2121,6 +2121,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 87.63) (xy 167.64 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "02dd90ba-89e0-4f0b-bc4c-65f90cc8d49f")
+	)
+	(wire
+		(pts
 			(xy 35.56 111.76) (xy 27.94 111.76)
 		)
 		(stroke
@@ -2371,6 +2381,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 90.17) (xy 167.64 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "726bfc2f-c7e3-4016-b640-7c78663cc9ba")
+	)
+	(wire
+		(pts
 			(xy 179.07 54.61) (xy 179.07 58.42)
 		)
 		(stroke
@@ -2421,6 +2441,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 95.25) (xy 167.64 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7e05dfb8-57a1-40c7-abb7-5f9efeb22f04")
+	)
+	(wire
+		(pts
 			(xy 156.21 59.69) (xy 163.83 59.69)
 		)
 		(stroke
@@ -2458,6 +2488,16 @@
 			(type default)
 		)
 		(uuid "8c0165b3-0c81-4e6d-8180-5ba420b94a64")
+	)
+	(wire
+		(pts
+			(xy 156.21 97.79) (xy 167.64 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8dab8ed4-8b59-4ac3-ab3c-0d4bdcf9a431")
 	)
 	(wire
 		(pts
@@ -2531,6 +2571,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 77.47) (xy 167.64 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a7b4a394-3925-4107-9d36-a2186c4671cd")
+	)
+	(wire
+		(pts
 			(xy 113.03 95.25) (xy 120.65 95.25)
 		)
 		(stroke
@@ -2541,16 +2591,6 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 90.17) (xy 167.64 90.17)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b1ab38a9-9dc9-4995-9278-b3655d0c7e91")
-	)
-	(wire
-		(pts
 			(xy 214.63 53.34) (xy 224.79 53.34)
 		)
 		(stroke
@@ -2558,16 +2598,6 @@
 			(type default)
 		)
 		(uuid "b31cc9c6-1b96-404b-9c08-ed78d9b14840")
-	)
-	(wire
-		(pts
-			(xy 156.21 87.63) (xy 167.64 87.63)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b5843a41-1e7a-4412-a265-95fdaab5eb1a")
 	)
 	(wire
 		(pts
@@ -2661,16 +2691,6 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 97.79) (xy 167.64 97.79)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c9741e63-fa0a-49e4-915f-56864e57a025")
-	)
-	(wire
-		(pts
 			(xy 237.49 39.37) (xy 237.49 45.72)
 		)
 		(stroke
@@ -2751,16 +2771,6 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 95.25) (xy 167.64 95.25)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f130648a-8756-4741-bb14-e40cba8dad3e")
-	)
-	(wire
-		(pts
 			(xy 27.94 39.37) (xy 27.94 49.53)
 		)
 		(stroke
@@ -2768,16 +2778,6 @@
 			(type default)
 		)
 		(uuid "f8c4b0c2-4eee-480a-9b01-e54d2719c893")
-	)
-	(wire
-		(pts
-			(xy 156.21 85.09) (xy 167.64 85.09)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f8cf9fde-1ae2-483b-81f0-bf4c55caa91b")
 	)
 	(wire
 		(pts
@@ -3527,7 +3527,7 @@
 	)
 	(global_label "MISO"
 		(shape input)
-		(at 167.64 85.09 0)
+		(at 167.64 97.79 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3537,7 +3537,7 @@
 		)
 		(uuid "57651d9d-236f-496b-a7d9-fe279a7af4e8")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 175.2214 85.09 0)
+			(at 175.2214 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3835,7 +3835,7 @@
 	)
 	(global_label "CE"
 		(shape input)
-		(at 167.64 95.25 0)
+		(at 167.64 77.47 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3845,7 +3845,7 @@
 		)
 		(uuid "b8bd185c-0207-4f96-be9c-bfc096a78b59")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 173.0442 95.25 0)
+			(at 173.0442 77.47 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3923,7 +3923,7 @@
 	)
 	(global_label "CSN"
 		(shape input)
-		(at 167.64 97.79 0)
+		(at 167.64 95.25 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3933,7 +3933,7 @@
 		)
 		(uuid "d9e4645d-e9d5-4551-b14c-04a517ff1a12")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 174.4352 97.79 0)
+			(at 174.4352 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
