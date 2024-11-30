@@ -1,6 +1,6 @@
 /**
  *  Klient - NUPP
- *  Edited: 29.11.2024
+ *  Edited: 30.11.2024
  *  Tauno Erik
  *  
  *  Board: Arduino Nano
@@ -46,8 +46,10 @@ bool is_connected = false;  // Is in contact with the controller?
 bool btn_enabled = false;
 
 uint8_t btn_number = DEVICE_ID;
-uint8_t write_pipe[6] = "1QBTN";
-uint8_t read_pipe[6] = "0QBTN";
+
+const uint8_t WRITE_PIPE[6] = "1QBTN"; // Vastupidi ülemusele
+const uint8_t READ_PIPE[6] = "0QBTN";
+
 
 uint32_t last_status_send = 0;
 uint32_t btn_down_time = 0;
@@ -92,8 +94,8 @@ void setup()
     Serial.write("RF24 device found\n");
   }
 
-  radio.openWritingPipe(write_pipe);
-  radio.openReadingPipe(1, read_pipe);
+  radio.openWritingPipe(WRITE_PIPE);
+  radio.openReadingPipe(1, READ_PIPE);
   radio.stopListening();
 }
 
@@ -112,6 +114,8 @@ void loop()
       while (!find_btn_controller())
       {
       };
+
+      Serial.write("Found controller");
       digitalWrite(PIN_LED, LOW);
       is_connected = true;
       last_status_send = now;
@@ -120,7 +124,8 @@ void loop()
     // If the button was pressed down (and its been 300ms since last check)
     if ((digitalRead(PIN_BUTTON) == LOW) && (now - btn_down_time > 300) && (btn_enabled))
     {
-      // This ensures we get a random number sequence unique to this player.  The random number is used to prevent packet collision
+      // This ensures we get a random number sequence unique to this player.
+      // The random number is used to prevent packet collision
       randomSeed(now);
       // Send the DOWN state
       if (send_btn_status(true))
@@ -138,7 +143,9 @@ void loop()
         last_status_send = now;
       }
       else
+      {
         delay(10);
+      }
     }
 
     digitalWrite(PIN_LED, (led_status == LED_on) || ((led_status == LED_flashing) && ((now & 255) > 128)));
@@ -168,9 +175,10 @@ bool find_btn_controller()
     // Send a single byte for status
     if (send_btn_status(false))
     {
-      Serial.write("Quiz Controller found on channel ");
+      Serial.write("Controller found on channel ");
       char buffer[10];
       itoa(a, buffer, 10);
+
       Serial.write(buffer);
       Serial.write("\n");
       return true;
@@ -203,9 +211,10 @@ bool send_btn_status(bool is_down)
     message |= 128;
   }
 
-  for (uint8_t retries = 0; retries < NUM_OF_PLAYERS; retries++) //4
+  for (uint8_t retries = 0; retries < NUM_OF_PLAYERS; retries++)
   {
-    // This delay is used incase transmit fails.  We will assume it fails because of data collision with another button.
+    // This delay is used incase transmit fails.
+    // We will assume it fails because of data collision with another button.
     // This is inspired by https://www.geeksforgeeks.org/back-off-algorithm-csmacd/
     unsigned int random_delay_amount = random(1, 2 + ((retries * retries) * 2));
 

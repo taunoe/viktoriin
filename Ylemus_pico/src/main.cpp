@@ -2,7 +2,7 @@
  * Ülemus
  * main.cpp
  * Tauno Erik
- * 29.11.2024
+ * 30.11.2024
  * 
  * Board: Raspberry Pi Pico
  *********************************************/
@@ -32,8 +32,8 @@
 #define PIN_SCK 18
 #define PIN_CE 22
 
-uint8_t write_pipe[6] = "0QBTN";
-uint8_t read_pipe[6] = "1QBTN";
+const uint8_t WRITE_PIPE[6] = "0QBTN";
+const uint8_t READ_PIPE[6] = "1QBTN";
 
 RF24 radio(PIN_CE, PIN_CS);
 
@@ -70,9 +70,6 @@ uint32_t now = 0;
 // System status
 bool is_ready = false;
 
-// Is audio playing?
-bool is_playing = false;
-bool dfPlayerReady = false;
 
 /*************************************************************/
 
@@ -112,10 +109,10 @@ void setup()
   {
     Serial.write("RF24 detected.\n");
 
-    digitalWrite(PIN_STATUS_LED, LOW);
+    digitalWrite(PIN_STATUS_LED, HIGH);
 
-    radio.openWritingPipe(write_pipe);
-    radio.openReadingPipe(1, read_pipe);
+    radio.openWritingPipe(WRITE_PIPE);
+    radio.openReadingPipe(1, READ_PIPE);
 
     for (uint8_t channel = 0; channel < NUM_OF_PLAYERS; channel++)
     {
@@ -127,6 +124,7 @@ void setup()
 
     while (!(find_empty_channel()))
     {
+      // oota kuni leiab vaba kanali
     };
 
     radio.startListening();
@@ -146,11 +144,13 @@ void loop()
   // Reset Button
   if (digitalRead(PIN_RESET_BTN) == PRESSED) // LOW
   {
-    for (uint8_t button = 0; button < NUM_OF_PLAYERS; button++)
+    Serial.write("Reset btn\n");
+
+    for (uint8_t btn = 0; btn < NUM_OF_PLAYERS; btn++)
     {
-      led_status[button] = LED_off;
-      btn_enabled[button] = false;
-      has_answered[button] = false;
+      led_status[btn] = LED_off;
+      btn_enabled[btn] = false;
+      has_answered[btn] = false;
     }
     is_ready = false;
     digitalWrite(PIN_STATUS_LED, LOW);
@@ -158,8 +158,9 @@ void loop()
   // Ready Button
   else if (digitalRead(PIN_READY_BTN) == PRESSED) // LOW
   {
+    Serial.write("Ready btn\n");
     // Make the buttons flash that havent answered yet
-    for (unsigned char button = 0; button < NUM_OF_PLAYERS; button++)
+    for (uint8_t button = 0; button < NUM_OF_PLAYERS; button++)
     {
       btn_enabled[button] = !has_answered[button];
       led_status[button] = has_answered[button] ? LED_off : LED_flashing;
@@ -213,6 +214,7 @@ bool find_empty_channel()
 
     unsigned int in_use = 0;
     uint32_t test_start = millis();
+
     // Check for 400 ms per channel
     while (millis() - test_start < 400)
     {
@@ -266,6 +268,11 @@ void check_radio_message_received()
 
     // Grab the button number from the data
     uint8_t button_number = buffer & 0x7F; // Get the button number
+
+    Serial.write("Btn: ");
+    Serial.write(button_number);
+    Serial.write("\n");
+
     if ((button_number >= 1) && (button_number <= NUM_OF_PLAYERS))
     {
       button_number--;
@@ -282,16 +289,10 @@ void check_radio_message_received()
         // No longer ready
         is_ready = false;
 
-        //if (dfPlayerReady)
-        //{
-          //player.play(buttonNumber + 1);
-          //is_playing = true;
-       // }
-
         // Signal the button was pressed
         has_answered[button_number] = true;
 
-        // Change button status
+        // Change button led status
         for (uint8_t btn = 0; btn < NUM_OF_PLAYERS; btn++)
         {
           led_status[btn] = (btn == button_number) ? LED_on : LED_off;
@@ -304,4 +305,3 @@ void check_radio_message_received()
     setup_ACK_payload();
   }
 }
-
