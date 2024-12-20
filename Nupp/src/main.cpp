@@ -8,12 +8,25 @@
 #include <Arduino.h>
 #include <RF24.h>
 
+
+#define DEBUG
+
+#ifdef DEBUG
+  #define DEBUG_PRINT(x) Serial.print(x)
+  #define DEBUG_PRINTLN(x) Serial.println(x)
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+#endif
+
+
+
 // !!!! VALI !!!!
 //#define DEVICE_ID 1 // Punane
-//#define DEVICE_ID 2 // Roheline
+#define DEVICE_ID 2 // Roheline
 //#define DEVICE_ID 3 // Kollane
 //#define DEVICE_ID 4 // Sinine
-#define DEVICE_ID 5 // Valge
+//#define DEVICE_ID 5 // Valge
 
 #define NUM_OF_PLAYERS 5
 
@@ -74,9 +87,20 @@ void setup()
   };
   */
 
+  if (btn_number < 1 || btn_number > NUM_OF_PLAYERS)
+  {
+    Serial.println("Invalid button number!");
+    while (true) {} // Halt if invalid configuration
+  }
+  else
+  {
+    DEBUG_PRINT("BTN number:");
+    DEBUG_PRINT(btn_number);
+  }
+
   if (!radio.begin())
   {
-    Serial.write("RF24 device failed to begin\n");
+    DEBUG_PRINT("RF24 device failed to begin\n");
   }
   radio.setPALevel(RF24_PA_LOW); // Max power
   radio.enableDynamicPayloads();
@@ -87,11 +111,11 @@ void setup()
 
   if (!radio.isChipConnected())
   {
-    Serial.write("RF24 device not detected.\n");
+    DEBUG_PRINT("RF24 device not detected.\n");
   }
   else
   {
-    Serial.write("RF24 device found\n");
+    DEBUG_PRINT("RF24 device found\n");
   }
 
   radio.openWritingPipe(WRITE_PIPE);
@@ -115,7 +139,7 @@ void loop()
       {
       };
 
-      Serial.write("Found controller");
+      DEBUG_PRINT("Found controller");
       digitalWrite(PIN_LED, LOW);
       is_connected = true;
       last_status_send = now;
@@ -166,21 +190,22 @@ void loop()
 **************************************************************/
 bool find_btn_controller()
 {
-  Serial.write("Searching for controller...\n");
+  DEBUG_PRINT("Searching for controller...\n");
+  int channel_step = 5; // Adjustable step size
 
-  for (int a = 125; a > 0; a -= 10)
+  for (int a = 125; a > 0; a -= channel_step)
   {
     radio.setChannel(a);
     delay(15);
     // Send a single byte for status
     if (send_btn_status(false))
     {
-      Serial.write("Controller found on channel ");
+      DEBUG_PRINT("Controller found on channel ");
       char buffer[10];
       itoa(a, buffer, 10);
 
-      Serial.write(buffer);
-      Serial.write("\n");
+      DEBUG_PRINT(buffer);
+      DEBUG_PRINT("\n");
       return true;
     }
     digitalWrite(PIN_LED, (millis() & 2047) > 2000);
@@ -204,33 +229,45 @@ bool find_btn_controller()
 ********************************************************************************/
 bool send_btn_status(bool is_down)
 {
-  uint8_t message = btn_number;
+  //unsigned char message = btn_number;
+  unsigned char message[2];
+  message[0] = btn_number;
+  message[1] = message[0] ^ 0xA5; // Simple XOR checksum
 
   if (is_down)
   {
-    message |= 128;
+    message[0] |= 128;
   }
 
-  for (uint8_t retries = 0; retries < NUM_OF_PLAYERS; retries++)
+  for (unsigned char retries = 0; retries < NUM_OF_PLAYERS; retries++)
   {
     // This delay is used incase transmit fails.
     // We will assume it fails because of data collision with another button.
     // This is inspired by https://www.geeksforgeeks.org/back-off-algorithm-csmacd/
-    unsigned int random_delay_amount = random(1, 2 + ((retries * retries) * 2));
+    //unsigned int random_delay_amount = random(1, 2 + ((retries * retries) * 2));
+    unsigned int random_delay_amount = random(1, 2 + pow(2, retries) + random(1, 5));
 
-    if (radio.write(&message, 1))
+    if (radio.write(&message, sizeof(message)))
     {
       if (radio.available())
       {
-        Serial.write("radio.available()\n");
-        if (radio.getDynamicPayloadSize() == NUM_OF_PLAYERS)
+        DEBUG_PRINT("radio.available()\n");
+
+        if (radio.getDynamicPayloadSize() != NUM_OF_PLAYERS)
+        {
+          Serial.println("Unexpected payload size");
+          return false;
+        }
+
+
+        if (radio.getDynamicPayloadSize() == NUM_OF_PLAYERS) // NUM_OF_PLAYERS
         {
           unsigned char tmp[NUM_OF_PLAYERS];
           radio.read(&tmp, NUM_OF_PLAYERS);
 
           btn_enabled = (tmp[btn_number - 1] & 128) != 0;
-          led_status = (LED_Status)(tmp[btn_number - 1] & 3);
-          Serial.write("Radio write OK, ACK Payload\n");
+          led_status = (LED_Status)(tmp[btn_number - 1] & 3); //
+          DEBUG_PRINT("Radio write OK, ACK Payload\n");
 
           return true;
         }
@@ -238,19 +275,22 @@ bool send_btn_status(bool is_down)
         {
           // Remove redundant data
           int total = radio.getDynamicPayloadSize();
+          DEBUG_PRINT("total");
+          DEBUG_PRINT(total);
+          DEBUG_PRINT("\n");
           unsigned char tmp;
           while (total-- > 0)
           {
             radio.read(&tmp, 1);
           }
-          Serial.write("Radio write OK, ACK wrong size\n");
+          DEBUG_PRINT("Radio write OK, ACK wrong size\n");
           delay(random_delay_amount);
         }
       }
       else
       {
         // This shouldn't really happen, but can sometimes if the controller is busy
-        Serial.write("Radio write OK, no ACK\n");
+        DEBUG_PRINT("Radio write OK, no ACK\n");
         return true;
       }
     }
@@ -260,6 +300,6 @@ bool send_btn_status(bool is_down)
     }
   }
 
-  Serial.write("Radio write Failed\n");
+  DEBUG_PRINT("Radio write Failed\n");
   return false;
 }

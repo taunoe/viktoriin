@@ -2,13 +2,24 @@
  * Ülemus
  * main.cpp
  * Tauno Erik
- * 30.11.2024
+ * 10.12.2024
  * 
  * Board: Raspberry Pi Pico
  *********************************************/
 #include <Arduino.h>
 #include <RF24.h>
 #include <SPI.h>
+
+
+#define DEBUG 1
+#if DEBUG
+  #define DEBUG_PRINT(x) Serial.print(x)
+  #define DEBUG_PRINTLN(x) Serial.println(x)
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+#endif
+
 
 #define NUM_OF_PLAYERS 5  // Mängijaid
 // LEDS
@@ -36,8 +47,6 @@ const uint8_t WRITE_PIPE[6] = "0QBTN";
 const uint8_t READ_PIPE[6] = "1QBTN";
 
 RF24 radio(PIN_CE, PIN_CS);
-
-
 
 
 // NUPP LED pins
@@ -96,6 +105,9 @@ void setup()
   radio.setDataRate(RF24_250KBPS);
   radio.setRetries(4, 8);
   radio.maskIRQ(false, false, false); // not using the IRQs
+  radio.setCRCLength(RF24_CRC_16); // Use 16-bit CRC (default)
+  //radio.setCRCLength(RF24_CRC_8); // Use 8-bit CRC
+
 
   pinMode(PIN_STATUS_LED, OUTPUT);
   pinMode(PIN_RESET_BTN, INPUT_PULLUP);
@@ -103,11 +115,12 @@ void setup()
 
   if (!radio.isChipConnected())
   {
-    Serial.write("RF24 device not detected.\n");
+    Serial.print("RF24 device not detected.\n");
+    while (1); // Infinite loop to stop further execution
   }
   else
   {
-    Serial.write("RF24 detected.\n");
+    Serial.print("RF24 detected.\n");
 
     digitalWrite(PIN_STATUS_LED, HIGH);
 
@@ -122,9 +135,11 @@ void setup()
 
     radio.startListening();
 
+    Serial.print("Find empty channel ");
     while (!(find_empty_channel()))
     {
       // oota kuni leiab vaba kanali
+      Serial.print(".");
     };
 
     radio.startListening();
@@ -144,7 +159,7 @@ void loop()
   // Reset Button
   if (digitalRead(PIN_RESET_BTN) == PRESSED) // LOW
   {
-    Serial.write("Reset btn\n");
+    Serial.print("Reset btn\n");
 
     for (uint8_t btn = 0; btn < NUM_OF_PLAYERS; btn++)
     {
@@ -158,7 +173,7 @@ void loop()
   // Ready Button
   else if (digitalRead(PIN_READY_BTN) == PRESSED) // LOW
   {
-    Serial.write("Ready btn\n");
+    Serial.print("Ready btn\n");
     // Make the buttons flash that havent answered yet
     for (uint8_t button = 0; button < NUM_OF_PLAYERS; button++)
     {
@@ -184,7 +199,7 @@ void loop()
       else
       {
         // Set the LED to match the state we have it in
-        digitalWrite(BTN_LEDS[button], (led_status[button] == LED_on) || ((led_status[button] == LED_flashing) && (now & 255) > 128));
+        digitalWrite(BTN_LEDS[button], (led_status[button] == LED_on) || ((led_status[button] == LED_flashing) && (now % 256) > 128)); // (now & 255) > 128
       }
     }
     else
@@ -203,7 +218,7 @@ void loop()
 ***************************************************/
 bool find_empty_channel()
 {
-  Serial.write("Scanning for empty channel...\n");
+  Serial.print("Scanning for empty channel...\n");
   char buffer[10];
 
   // Scan all channels looking for a quiet one.  We skip every 10
@@ -230,14 +245,15 @@ bool find_empty_channel()
     if (in_use < 10)
     {
       itoa(channel, buffer, 10);
-      Serial.write("Channel ");
-      Serial.write(buffer);
-      Serial.write(" selected\n");
+      Serial.print("Channel ");
+      Serial.print(buffer);
+      Serial.print(" selected\n");
       return true;
     }
   }
   return false;
 }
+
 
 /***********************************************************
 ** Sends a new ACK payload to the transmitter
@@ -256,6 +272,7 @@ void setup_ACK_payload()
 }
 
 
+
 /**********************************************************
 ** Check for messages from the buttons
 ***********************************************************/
@@ -269,11 +286,12 @@ void check_radio_message_received()
     // Grab the button number from the data
     uint8_t button_number = buffer & 0x7F; // Get the button number
 
-    Serial.write("Btn: ");
-    Serial.write(button_number);
-    Serial.write("\n");
+    Serial.print("Btn: ");
+    Serial.print(button_number);
+    Serial.print("\n");
 
-    if ((button_number >= 1) && (button_number <= NUM_OF_PLAYERS))
+    //if ((button_number >= 1) && (button_number <= NUM_OF_PLAYERS))
+    if (button_number < NUM_OF_PLAYERS)
     {
       button_number--;
 
