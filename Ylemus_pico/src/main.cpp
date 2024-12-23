@@ -2,26 +2,25 @@
  * Ülemus
  * main.cpp
  * Tauno Erik
- * 10.12.2024
- * 
- * Board: Raspberry Pi Pico
+ * 20.12.2024
+ *
+ * Raspberry Pi Pico
+ * nRF24L01 Radio
  *********************************************/
 #include <Arduino.h>
 #include <RF24.h>
 #include <SPI.h>
 
-
 #define DEBUG 1
 #if DEBUG
-  #define DEBUG_PRINT(x) Serial.print(x)
-  #define DEBUG_PRINTLN(x) Serial.println(x)
+#define DEBUG_PRINT(x) Serial.print(x)
+#define DEBUG_PRINTLN(x) Serial.println(x)
 #else
-  #define DEBUG_PRINT(x)
-  #define DEBUG_PRINTLN(x)
+#define DEBUG_PRINT(x)
+#define DEBUG_PRINTLN(x)
 #endif
 
-
-#define NUM_OF_PLAYERS 5  // Mängijaid
+#define NUM_OF_PLAYERS 5 // Mängijaid
 // LEDS
 #define NUPP_0_LED 10 // GPIO10
 #define NUPP_1_LED 11
@@ -37,7 +36,7 @@
 // Radio - SPI
 // https://www.youtube.com/watch?v=y5tFUnR5hM0
 // For Arduino-pico core
-#define PIN_MISO  16
+#define PIN_MISO 16
 #define PIN_MOSI 19
 #define PIN_CS 17
 #define PIN_SCK 18
@@ -48,16 +47,13 @@ const uint8_t READ_PIPE[6] = "1QBTN";
 
 RF24 radio(PIN_CE, PIN_CS);
 
-
 // NUPP LED pins
 uint8_t BTN_LEDS[NUM_OF_PLAYERS] = {
-  NUPP_0_LED,
-  NUPP_1_LED,
-  NUPP_2_LED,
-  NUPP_3_LED,
-  NUPP_4_LED
-};
-
+    NUPP_0_LED,
+    NUPP_1_LED,
+    NUPP_2_LED,
+    NUPP_3_LED,
+    NUPP_4_LED};
 
 enum LED_Status : uint8_t
 {
@@ -65,7 +61,6 @@ enum LED_Status : uint8_t
   LED_on = 1,
   LED_flashing = 2
 };
-
 
 LED_Status led_status[NUM_OF_PLAYERS] = {LED_off, LED_off, LED_off, LED_off, LED_off};
 bool btn_enabled[NUM_OF_PLAYERS] = {false, false, false, false, false};
@@ -79,76 +74,31 @@ uint32_t now = 0;
 // System status
 bool is_ready = false;
 
-
-/*************************************************************/
-
+/*************************************************************
+ * Function Prototypes
+ *************************************************************/
+void setup_radio();
+void start_radio();
 bool find_empty_channel();
 void setup_ACK_payload();
 void check_radio_message_received();
 
 /*************************************************************/
 
-
 void setup()
 {
-
   Serial.begin(57600);
-  
-  //while (!Serial)
-  //{
-  //};
-
-  radio.begin();
-  radio.setPALevel(RF24_PA_LOW);
-  radio.enableDynamicPayloads();
-  radio.enableAckPayload();
-  radio.setDataRate(RF24_250KBPS);
-  radio.setRetries(4, 8);
-  radio.maskIRQ(false, false, false); // not using the IRQs
-  radio.setCRCLength(RF24_CRC_16); // Use 16-bit CRC (default)
-  //radio.setCRCLength(RF24_CRC_8); // Use 8-bit CRC
-
-
+  // Pins
   pinMode(PIN_STATUS_LED, OUTPUT);
   pinMode(PIN_RESET_BTN, INPUT_PULLUP);
   pinMode(PIN_READY_BTN, INPUT_PULLUP);
 
-  if (!radio.isChipConnected())
-  {
-    Serial.print("RF24 device not detected.\n");
-    while (1); // Infinite loop to stop further execution
-  }
-  else
-  {
-    Serial.print("RF24 detected.\n");
+  // while (!Serial)
+  //{
+  // };
 
-    digitalWrite(PIN_STATUS_LED, HIGH);
-
-    radio.openWritingPipe(WRITE_PIPE);
-    radio.openReadingPipe(1, READ_PIPE);
-
-    for (uint8_t channel = 0; channel < NUM_OF_PLAYERS; channel++)
-    {
-      pinMode(BTN_LEDS[channel], OUTPUT);
-      digitalWrite(BTN_LEDS[channel], LOW);
-    }
-
-    radio.startListening();
-
-    Serial.print("Find empty channel ");
-    while (!(find_empty_channel()))
-    {
-      // oota kuni leiab vaba kanali
-      Serial.print(".");
-    };
-
-    radio.startListening();
-
-    // Ready
-    digitalWrite(PIN_STATUS_LED, LOW);
-
-    setup_ACK_payload();
-  }
+  setup_radio();
+  start_radio();
 }
 
 
@@ -157,7 +107,7 @@ void loop()
   now = millis();
 
   // Reset Button
-  if (digitalRead(PIN_RESET_BTN) == PRESSED) // LOW
+  if (digitalRead(PIN_RESET_BTN) == PRESSED)
   {
     Serial.print("Reset btn\n");
 
@@ -171,7 +121,7 @@ void loop()
     digitalWrite(PIN_STATUS_LED, LOW);
   }
   // Ready Button
-  else if (digitalRead(PIN_READY_BTN) == PRESSED) // LOW
+  else if (digitalRead(PIN_READY_BTN) == PRESSED)
   {
     Serial.print("Ready btn\n");
     // Make the buttons flash that havent answered yet
@@ -199,7 +149,17 @@ void loop()
       else
       {
         // Set the LED to match the state we have it in
-        digitalWrite(BTN_LEDS[button], (led_status[button] == LED_on) || ((led_status[button] == LED_flashing) && (now % 256) > 128)); // (now & 255) > 128
+        //digitalWrite(BTN_LEDS[button], (led_status[button] == LED_on) || ((led_status[button] == LED_flashing) && (now % 256) > 128)); // (now & 255) > 128
+
+        bool is_led_on = (led_status[button] == LED_on);
+        bool is_led_flashing = (led_status[button] == LED_flashing);
+        bool is_flash_active = (now % 256) > 128;
+
+        if (is_led_on || (is_led_flashing && is_flash_active)) {
+          digitalWrite(BTN_LEDS[button], HIGH);
+        } else {
+          digitalWrite(BTN_LEDS[button], LOW);
+        }
       }
     }
     else
@@ -212,6 +172,60 @@ void loop()
   check_radio_message_received();
 }
 
+/**************************************************
+ *
+ **************************************************/
+void setup_radio()
+{
+  radio.begin();
+  radio.setPALevel(RF24_PA_LOW);
+  radio.enableDynamicPayloads();
+  radio.enableAckPayload();
+  radio.setDataRate(RF24_250KBPS);
+  radio.setRetries(4, 8);
+  radio.maskIRQ(false, false, false); // not using the IRQs
+  radio.setCRCLength(RF24_CRC_16);    // Use 16-bit CRC (default)
+  // radio.setCRCLength(RF24_CRC_8); // Use 8-bit CRC
+}
+
+void start_radio()
+{
+  if (!radio.isChipConnected())
+  {
+    Serial.print("ERROR - RF24 not detected\n");
+    while (1)
+    {
+      ; // Infinite loop to stop further execution
+    }
+  }
+  else
+  {
+    Serial.print("RF24 detected\n");
+
+    digitalWrite(PIN_STATUS_LED, HIGH);
+
+    radio.openWritingPipe(WRITE_PIPE);
+    radio.openReadingPipe(1, READ_PIPE);
+
+    for (uint8_t channel = 0; channel < NUM_OF_PLAYERS; channel++)
+    {
+      pinMode(BTN_LEDS[channel], OUTPUT);
+      digitalWrite(BTN_LEDS[channel], LOW);
+    }
+
+    radio.startListening();
+
+    Serial.print("Find empty channel ");
+    while (!(find_empty_channel()))
+    {
+      Serial.print("."); // oota kuni leiab vaba kanali
+    };
+    // Ready
+    radio.startListening();
+    digitalWrite(PIN_STATUS_LED, LOW);
+    setup_ACK_payload();
+  }
+}
 
 /**************************************************
 ** Searches the radio spectrum for a quiet channel
@@ -254,7 +268,6 @@ bool find_empty_channel()
   return false;
 }
 
-
 /***********************************************************
 ** Sends a new ACK payload to the transmitter
 ************************************************************/
@@ -270,8 +283,6 @@ void setup_ACK_payload()
 
   radio.writeAckPayload(1, &payload, NUM_OF_PLAYERS);
 }
-
-
 
 /**********************************************************
 ** Check for messages from the buttons
@@ -290,8 +301,8 @@ void check_radio_message_received()
     Serial.print(button_number);
     Serial.print("\n");
 
-    //if ((button_number >= 1) && (button_number <= NUM_OF_PLAYERS))
-    if (button_number < NUM_OF_PLAYERS)
+    // if ((button_number >= 1) && (button_number <= NUM_OF_PLAYERS))
+    if (button_number <= NUM_OF_PLAYERS)
     {
       button_number--;
 

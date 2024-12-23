@@ -1,6 +1,6 @@
 /**
  *  Klient - NUPP
- *  Edited: 30.11.2024
+ *  Edited: 20.12.2024
  *  Tauno Erik
  *  
  *  Board: Arduino Nano
@@ -23,9 +23,9 @@
 
 // !!!! VALI !!!!
 //#define DEVICE_ID 1 // Punane
-#define DEVICE_ID 2 // Roheline
+//#define DEVICE_ID 2 // Roheline
 //#define DEVICE_ID 3 // Kollane
-//#define DEVICE_ID 4 // Sinine
+#define DEVICE_ID 4 // Sinine
 //#define DEVICE_ID 5 // Valge
 
 #define NUM_OF_PLAYERS 5
@@ -225,7 +225,7 @@ bool find_btn_controller()
 
 
 /*******************************************************************************
-** Attempt to send the sttaus of the button and receive what we shoudl be doing
+** Attempt to send the stataus of the button and receive what we shoudl be doing
 ********************************************************************************/
 bool send_btn_status(bool is_down)
 {
@@ -234,12 +234,12 @@ bool send_btn_status(bool is_down)
   message[0] = btn_number;
   message[1] = message[0] ^ 0xA5; // Simple XOR checksum
 
-  if (is_down)
+  if (is_down) // Kui nupp on all
   {
-    message[0] |= 128;
+    message[0] |= 128; // 128 ehk 0b10000000
   }
 
-  for (unsigned char retries = 0; retries < NUM_OF_PLAYERS; retries++)
+  for (unsigned char retries = 0; retries <= NUM_OF_PLAYERS; retries++)
   {
     // This delay is used incase transmit fails.
     // We will assume it fails because of data collision with another button.
@@ -249,13 +249,14 @@ bool send_btn_status(bool is_down)
 
     if (radio.write(&message, sizeof(message)))
     {
+      DEBUG_PRINT("if-->\n");
       if (radio.available())
       {
         DEBUG_PRINT("radio.available()\n");
 
         if (radio.getDynamicPayloadSize() != NUM_OF_PLAYERS)
         {
-          Serial.println("Unexpected payload size");
+          DEBUG_PRINTLN("Unexpected payload size");
           return false;
         }
 
@@ -296,6 +297,7 @@ bool send_btn_status(bool is_down)
     }
     else
     {
+      //DEBUG_PRINT("delay\n");
       delay(random_delay_amount);
     }
   }
